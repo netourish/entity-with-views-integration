@@ -1,0 +1,53 @@
+<?php
+
+/**
+ * @file
+ * Create table and attach fields to travel.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function travel_schema() {
+  $schema = array();
+  $schema['travel'] = array(
+    'description' => 'The base table for travel.',
+    'fields' => array(
+      'tid' => array(
+        'description' => 'The primary identifier.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'Travel bundle.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'transport' => array(
+        'description' => 'Travel Transport',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'source_from' => array(
+        'description' => 'Travel Source From.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'destination_to' => array(
+        'description' => 'Travel Destination To.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',      ),
+    ),
+    'primary key' => array('tid'),
+  );
+  return $schema;
+}

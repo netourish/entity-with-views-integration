@@ -1,0 +1,215 @@
+<?php
+
+/**
+ * @file
+ * Describe the details about the entity.
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function travel_permission() {
+  $permissions = array(
+    'view travel content' => array(
+      'title' => t('View Typical Entity Example content'),
+    ),
+    'administer travel content' => array(
+      'title' => t('Administer Typical Entity Example content'),
+      'restrict access' => TRUE,
+    ),
+  );
+  return $permissions;
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function travel_entity_info() {
+  $info = array(
+    'travel' => array(
+      'label' => t('Travel'),
+      'base table' => 'travel',
+      'entity keys' => array(  //  Name of the keys for the entity.
+        'id' => 'tid',
+        'label' => 'transport',  //Required for displays output.
+        'bundle' => 'type'  //The name of the property that contains the bundle name for the entity. The bundle name defines which set of fields are attached to the entity
+      ),
+      'bundles' => array(  //An array describing all bundles for this object type. Keys are bundles machine names, as found in the objects' 'bundle' property.
+        'public' => array(
+          'label' => t('Public'),
+        ),
+        'freight' => array(
+          'label' => t('Freight'),
+        ),
+      ),
+      'entity class' => 'Entity',  //For instantiating entities. Either Entity class should be used or to extend it.
+      'controller class' => 'TravelController',  //for providing the UI.
+      'metadata controller class' => '',  //For entity metadata wrappers
+      'uri callback' => 'travel_uri',
+      'views controller class' => 'EntityTravelViewsController',
+    ),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function travel_entity_property_info() {
+  $info = array();
+  $properties = &$info['travel']['properties'];
+  $properties['tid'] = array(
+    'type' => 'integer',
+    'schema field' => 'tid',
+    'label' => t('Travel Entity ID'),
+  );
+  $properties['type'] = array(
+    'type' => 'text',
+    'schema field' => 'type',
+    'required' => TRUE,
+    'label' => t('Entity Bundle Type'),
+  );
+  $properties['transport'] = array(
+    'type' => 'text',
+    'schema field' => 'transport',
+    'required' => TRUE,
+    'label' => t('Transport:'),
+  );
+  $properties['source_from'] = array(
+    'type' => 'text',
+    'schema field' => 'source_from',
+    'required' => TRUE,
+    'label' => t('Source From:'),
+  );
+  $properties['destination_to'] = array(
+    'type' => 'text',
+    'schema field' => 'destination_to',
+    'required' => TRUE,
+    'label' => t('Destination To:'),
+  );
+  return $info;
+}
+
+/**
+ * Implements entity_uri()
+ */
+function travel_uri($travel) {
+    return array(
+      'path' => 'travel/' . $travel->tid,
+    );
+}
+
+/**
+ * Load an instance of travel.
+ * 
+ * @param int $tid
+ *   Entity identifier.
+ * @param bool $reset
+ *   Whether to reset the internal cache for travel.
+ * 
+ * @return mixed
+ *   An actual entity, or false.
+ */
+function travel_load($tid, $reset = FALSE) {
+  $entities = travel_load_multiple(array($tid), array(), $reset);
+  return reset($entities);
+}
+
+/**
+ * Load multiple instances of travel.
+ * 
+ * @see entity_load()
+ * 
+ * @param array $tids
+ *   Entity identifiers.
+ * @param array $conditions
+ *   (deprecated) An associative array of conditions on the base entity table.
+ * @param bool $reset
+ *   Whether to reset the internal cache for travel.
+ * 
+ * @return array
+ *   Founded entities.
+ */
+function travel_load_multiple($tids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('travel', $tids, $conditions, $reset);
+}
+
+/**
+ * Implements hook_menu().
+ * 
+ * Describe pages for viewing and managing entities.
+ */
+function travel_menu() {
+  $items = array();
+
+  // Base URI for dealing with entity.
+  $base_uri = 'travel/%travel';
+  $base_uri_argument_position = 1;
+
+  // URI for viewing list of existing entities.
+  $items['travel'] = array(
+    'title' => 'Travels List',
+    'page callback' => 'travel_list',
+    'access arguments' => array('view travel content'),
+    'file' => 'travel.pages.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  // URI for choosing bundle of entity to add.
+  $items['travel/add'] = array(
+    'title' => 'Choose Travel Type',
+    'page callback' => 'travel_choose_bundle',
+    'access arguments' => array('administer travel content'),
+    'file' => 'travel.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  // URI for adding entity of proper bundle.
+  $entity_info = entity_get_info('travel');
+  foreach ($entity_info['bundles'] as $bundle_name => $bundle_data) {
+    $items['travel/add/' . $bundle_name] = array(
+      'title' => 'Add ' . $bundle_name,
+      'page callback' => 'travel_add',
+      'page arguments' => array(2),
+      'access arguments' => array('administer travel content'),
+      'file' => 'travel.admin.inc',
+    );
+  }
+
+  // URI for viewing entity instances.
+  $items[$base_uri] = array(
+    'title callback' => 'entity_label',
+    'title arguments' => array('travel', $base_uri_argument_position),
+    'page callback' => 'travel_view',
+    'page arguments' => array($base_uri_argument_position),
+    'access arguments' => array('view travel content'),
+    'file' => 'travel.pages.inc',
+  );
+  $items[$base_uri . '/view'] = array(
+    'title' => 'View Travel Entity',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  // URI for editing entity instances.
+  $items[$base_uri . '/edit'] = array(
+    'title' => 'Edit Typical Entity 4',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('travel_form', $base_uri_argument_position),
+    'access arguments' => array('administer travel content'),
+    'file' => 'travel.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+
+  // URI for deleting entity instances.
+  $items[$base_uri . '/delete'] = array(
+    'title' => 'Delete Typical Entity 4',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('travel_form_delete', $base_uri_argument_position),
+    'access arguments' => array('administer travel content'),
+    'file' => 'travel.admin.inc',
+  );
+
+  return $items;
+}
